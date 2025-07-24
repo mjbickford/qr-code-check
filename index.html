@@ -135,7 +135,7 @@
     <script type="module">
         // Firebase imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Get references to DOM elements
@@ -154,6 +154,20 @@
         let userId = null;
         let isAuthReady = false; // Flag to ensure Firestore operations only happen after auth
         let debounceTimer; // Timer for debouncing the logging function
+
+        // Your web app's Firebase configuration (PASTED FROM YOUR INPUT)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDjKBUKYbBvfn_J3yTVOr3W7aN-EfS_tJM",
+            authDomain: "qrcoderchecker.firebaseapp.com",
+            projectId: "qrcoderchecker",
+            storageBucket: "qrcoderchecker.firebasestorage.app",
+            messagingSenderId: "197095801529",
+            appId: "1:197095801529:web:f68d9ac77639e9b66e1168",
+            measurementId: "G-83D7N8PGLH"
+        };
+
+        // Use your Firebase Project ID as the app ID for Firestore paths
+        const appId = firebaseConfig.projectId;
 
         // Show loading overlay
         function showLoading() {
@@ -179,7 +193,6 @@
         // Initialize Firebase
         showLoading();
         try {
-            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
@@ -194,15 +207,11 @@
                     // Start listening for logged scans once authenticated
                     setupRealtimeListener();
                 } else {
-                    // Sign in anonymously if no user is found or __initial_auth_token is not defined
+                    // Sign in anonymously if no user is found
                     try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
+                        await signInAnonymously(auth); // Directly sign in anonymously
                     } catch (error) {
-                        console.error("Error signing in:", error);
+                        console.error("Error signing in anonymously:", error);
                         showModal("Failed to sign in. Some features may not work.");
                         hideLoading();
                     }
@@ -222,7 +231,8 @@
                 return;
             }
 
-            const logsCollectionRef = collection(db, `artifacts/${__app_id}/users/${userId}/qr_scan_logs`);
+            // Collection path using the projectId as appId
+            const logsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/qr_scan_logs`);
             // Note: orderBy is commented out as per instructions to avoid index issues.
             // Data will be sorted in client-side.
             const q = query(logsCollectionRef);
@@ -284,7 +294,8 @@
 
             try {
                 showLoading();
-                const logsCollectionRef = collection(db, `artifacts/${__app_id}/users/${userId}/qr_scan_logs`);
+                // Collection path using the projectId as appId
+                const logsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/qr_scan_logs`);
                 await addDoc(logsCollectionRef, {
                     scannedData: scannedValue,
                     timestamp: serverTimestamp() // Use serverTimestamp for consistent timestamps
@@ -333,4 +344,3 @@
     </script>
 </body>
 </html>
-
